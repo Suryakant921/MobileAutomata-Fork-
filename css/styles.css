@@ -1,0 +1,117 @@
+:root {
+    --sidebar-bg: #2c3e50;
+    --panel-bg: #34495e;
+    --accent: #3498db;
+    --accent-hover: #2980b9;
+    --muted: #95a5a6;
+    --danger: #e74c3c;
+    --success: #27ae60;
+    --warn: #f1c40f;
+    --warn-stroke: #f39c12;
+    --link-color: #bdc3c7;
+    --node-fill: #ecf0f1;
+    --text-dark: #2c3e50;
+    --port-color: #e67e22;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    background-color: #f8f9fa;
+}
+
+#sidebar {
+    width: 320px;
+    background-color: var(--sidebar-bg);
+    color: white;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+#visualization {
+    flex-grow: 1;
+    position: relative;
+    background-color: white;
+}
+
+h2 { margin-top: 0; font-size: 1.5rem; }
+
+.dashboard-panel {
+    background-color: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.dashboard-panel h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #7f8c8d;
+    padding-bottom: 5px;
+}
+
+.dashboard-item { margin: 8px 0; font-size: 0.95rem; }
+.dashboard-value { font-weight: bold; color: var(--accent); }
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--accent);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover:not(:disabled) { background-color: var(--accent-hover); }
+button:disabled { background-color: #7f8c8d; cursor: not-allowed; }
+.btn-secondary { background-color: var(--muted); }
+
+.button-row {
+    display: flex;
+    gap: 10px;
+}
+
+.button-row button { flex: 1; }
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: var(--danger);
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.toggle-container.active { background-color: var(--success); }
+.toggle-container input { width: 18px; height: 18px; }
+
+.legend {
+    font-size: 0.85rem;
+    color: var(--link-color);
+    line-height: 1.4;
+}
+
+/* SVG Styles */
+.link { stroke: var(--link-color); stroke-width: 2px; }
+.node { fill: var(--node-fill); stroke: var(--muted); stroke-width: 2px; }
+.node-label {
+    font-size: 12px;
+    text-anchor: middle;
+    dominant-baseline: central;
+    fill: var(--text-dark);
+    font-weight: bold;
+}
+.port-label { font-size: 10px; fill: var(--port-color); font-weight: bold; }
+.pebble { fill: var(--warn); stroke: var(--warn-stroke); stroke-width: 2px; }
+.agent { fill: var(--danger); transition: all 0.5s ease; }
