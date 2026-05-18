@@ -5,17 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DMA Graph Exploration Simulator</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://d3js.org/d3.v7.min.js" defer></script>
+    <script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js" defer></script>
     <script type="module" src="js/main.js" defer></script>
 </head>
 <body>
     <aside id="sidebar">
         <h2>DMA Simulator</h2>
 
-        <div class="toggle-container" id="pebble-toggle-bg">
-            <input type="checkbox" id="pebbles-toggle">
-            <label for="pebbles-toggle">Enable Pebbles</label>
-        </div>
+        <section class="panel">
+            <h3>Graph</h3>
+            <label class="field">
+                <span>Type</span>
+                <select id="graph-type"></select>
+            </label>
+            <div id="graph-params"></div>
+            <label class="field">
+                <span>Start node (root)</span>
+                <input type="number" id="start-node" value="0" min="0">
+            </label>
+            <button id="btn-build">Build Graph</button>
+        </section>
+
+        <section class="panel">
+            <h3>Automaton Φ</h3>
+            <label class="field">
+                <span>Strategy preset</span>
+                <select id="strategy"></select>
+            </label>
+            <div id="strategy-params"></div>
+            <button id="btn-apply-strategy">Apply preset</button>
+            <details>
+                <summary>Edit Φ (transition table)</summary>
+                <div id="trans-editor" class="trans-editor"></div>
+            </details>
+        </section>
+
+        <section class="panel">
+            <h3>Pebbles &amp; Termination</h3>
+            <label class="field">
+                <span>Pebble budget</span>
+                <input type="number" id="pebble-budget" value="1" min="0">
+            </label>
+            <label class="inline">
+                <input type="checkbox" id="infinite-pebbles">
+                <span>Infinite pebbles</span>
+            </label>
+            <label class="field">
+                <span>Termination</span>
+                <select id="termination"></select>
+            </label>
+        </section>
 
         <div class="button-row">
             <button id="btn-step">Next Step</button>
@@ -26,19 +65,22 @@
             <button id="btn-reset" class="btn-secondary">Reset</button>
         </div>
 
-        <section class="dashboard-panel">
+        <section class="panel">
             <h3>Live Status</h3>
+            <div class="dashboard-item">Input: <span class="dashboard-value" id="disp-input">-</span></div>
             <div class="dashboard-item">Current Node: <span class="dashboard-value" id="disp-node">-</span></div>
             <div class="dashboard-item">Entry Port: <span class="dashboard-value" id="disp-entry">-</span></div>
             <div class="dashboard-item">Node Status: <span class="dashboard-value" id="disp-status">-</span></div>
             <div class="dashboard-item">Action: <span class="dashboard-value" id="disp-action">-</span></div>
             <div class="dashboard-item">Exit Port: <span class="dashboard-value" id="disp-exit">-</span></div>
+            <div class="dashboard-item">Carried Pebbles: <span class="dashboard-value" id="disp-carried">-</span></div>
+            <div class="dashboard-item">Pebbles Placed: <span class="dashboard-value" id="disp-placed">-</span></div>
         </section>
 
         <p class="legend">
-            <strong>Basic Walk:</strong><br>
-            Without pebbles: DMA exits via (Entry Port + 1) mod Degree.<br>
-            With pebbles: Backtracks on empty nodes, normal walk on full nodes.
+            DMA reads input <code>(p, d, b)</code> (entry port, degree, e/f) and emits
+            <code>(p', a)</code> with <code>a ∈ {abstain, drop, pick}</code>.
+            Drop/pick are tried — they succeed only when the carried-pebble count permits.
         </p>
     </aside>
 

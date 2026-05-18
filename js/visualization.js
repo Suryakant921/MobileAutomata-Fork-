@@ -1,119 +1,130 @@
-// D3-based rendering of the graph, agent, ports, and pebbles.
+// Cytoscape rendering of the rooted graph with port-labelled edges,
+// a pebble overlay, and an agent class on the current node.
 
-const AGENT_RADIUS = 8;
-const NODE_RADIUS = 15;
-const PEBBLE_RADIUS = 6;
-const LINK_DISTANCE = 80;
-const CHARGE_STRENGTH = -300;
-const PORT_OFFSET = 0.25;
+const STYLE = [
+    {
+        selector: "node",
+        style: {
+            "background-color": "#ecf0f1",
+            "border-color": "#95a5a6",
+            "border-width": 2,
+            "label": "data(id)",
+            "color": "#2c3e50",
+            "font-weight": "bold",
+            "font-size": 12,
+            "text-valign": "center",
+            "text-halign": "center",
+            "width": 30,
+            "height": 30,
+        },
+    },
+    {
+        selector: "node.pebble",
+        style: {
+            "border-color": "#f39c12",
+            "border-width": 5,
+        },
+    },
+    {
+        selector: "node.agent",
+        style: {
+            "background-color": "#e74c3c",
+            "color": "white",
+        },
+    },
+    {
+        selector: "node.root",
+        style: {
+            "background-color": "#27ae60",
+            "color": "white",
+        },
+    },
+    {
+        selector: "node.root.agent",
+        style: {
+            "background-color": "#e74c3c",
+        },
+    },
+    {
+        selector: "edge",
+        style: {
+            "line-color": "#bdc3c7",
+            "width": 2,
+            "curve-style": "bezier",
+            "source-label": "data(portU)",
+            "target-label": "data(portV)",
+            "source-text-offset": 18,
+            "target-text-offset": 18,
+            "font-size": 10,
+            "color": "#e67e22",
+            "text-background-color": "white",
+            "text-background-opacity": 0.85,
+            "text-background-padding": 1,
+        },
+    },
+];
 
-export function createVisualization(container, { nodes, links, adj }) {
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+export function createVisualization(container, graph) {
+    const { nodes, edges, rootId, layoutHint, positions } = graph;
 
-    const svg = d3.select(container).append("svg")
-        .attr("width", width)
-        .attr("height", height);
+    const elements = [
+        ...nodes.map(n => ({
+            data: { id: String(n.id) },
+            position: positions && positions[n.id] ? { ...positions[n.id] } : undefined,
+        })),
+        ...edges.map((e, i) => ({
+            data: {
+                id: `e${i}`,
+                source: String(e.u),
+                target: String(e.v),
+                portU: e.portU,
+                portV: e.portV,
+            },
+        })),
+    ];
 
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(LINK_DISTANCE))
-        .force("charge", d3.forceManyBody().strength(CHARGE_STRENGTH))
-        .force("center", d3.forceCenter(width / 2, height / 2));
+    const layout = pickLayout(layoutHint, positions);
 
-    const linkSel = svg.append("g")
-        .selectAll("line")
-        .data(links)
-        .join("line")
-        .attr("class", "link");
-
-    const nodeGroup = svg.append("g")
-        .selectAll("g")
-        .data(nodes)
-        .join("g")
-        .call(buildDrag(simulation));
-
-    nodeGroup.append("circle")
-        .attr("class", "node")
-        .attr("r", NODE_RADIUS);
-
-    const pebbleIndicators = nodeGroup.append("circle")
-        .attr("class", "pebble")
-        .attr("r", PEBBLE_RADIUS)
-        .attr("cx", 10)
-        .attr("cy", -10)
-        .style("opacity", 0);
-
-    nodeGroup.append("text")
-        .attr("class", "node-label")
-        .text(d => d.id);
-
-    const portData = adj.flatMap((neighbors, u) =>
-        neighbors.map(n => ({ u, v: n.neighbor, port: n.port }))
-    );
-
-    const portLabels = svg.append("g")
-        .selectAll("text")
-        .data(portData)
-        .join("text")
-        .attr("class", "port-label")
-        .text(d => d.port);
-
-    const agentGraphic = svg.append("circle")
-        .attr("class", "agent")
-        .attr("r", AGENT_RADIUS);
-
-    let agentNodeId = 0;
-
-    function updateAgent() {
-        const node = nodes[agentNodeId];
-        if (node.x == null) return;
-        agentGraphic.attr("cx", node.x).attr("cy", node.y);
-    }
-
-    simulation.on("tick", () => {
-        linkSel
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
-
-        portLabels
-            .attr("x", d => nodes[d.u].x + (nodes[d.v].x - nodes[d.u].x) * PORT_OFFSET)
-            .attr("y", d => nodes[d.u].y + (nodes[d.v].y - nodes[d.u].y) * PORT_OFFSET);
-
-        updateAgent();
+    const cy = cytoscape({
+        container,
+        elements,
+        style: STYLE,
+        layout,
+        wheelSensitivity: 0.2,
     });
 
-    return {
-        setAgentNode(id) {
-            agentNodeId = id;
-            updateAgent();
-        },
-        showPebble(nodeId) {
-            pebbleIndicators.filter(d => d.id === nodeId).style("opacity", 1);
-        },
-        hideAllPebbles() {
-            pebbleIndicators.style("opacity", 0);
-        },
-    };
+    cy.getElementById(String(rootId)).addClass("root");
+
+    let agentId = null;
+
+    function setAgentNode(id) {
+        if (agentId !== null) cy.getElementById(String(agentId)).removeClass("agent");
+        agentId = id;
+        cy.getElementById(String(id)).addClass("agent");
+    }
+
+    function setPebble(nodeId, hasPebble) {
+        const el = cy.getElementById(String(nodeId));
+        if (hasPebble) el.addClass("pebble"); else el.removeClass("pebble");
+    }
+
+    function syncPebbles(nodesArr) {
+        for (const n of nodesArr) setPebble(n.id, n.hasPebble);
+    }
+
+    function destroy() { cy.destroy(); }
+
+    return { setAgentNode, setPebble, syncPebbles, destroy };
 }
 
-function buildDrag(simulation) {
-    function started(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
+function pickLayout(hint, positions) {
+    if (positions && Object.keys(positions).length > 0) {
+        return { name: "preset" };
     }
-    function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
+    switch (hint) {
+        case "circle": return { name: "circle" };
+        case "tree": return { name: "breadthfirst", spacingFactor: 1.2 };
+        case "preset": return { name: "preset" };
+        default: return { name: "cose", animate: false, idealEdgeLength: 90 };
     }
-    function ended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
-    return d3.drag().on("start", started).on("drag", dragged).on("end", ended);
 }
