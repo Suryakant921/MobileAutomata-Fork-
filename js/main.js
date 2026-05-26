@@ -89,7 +89,7 @@ function populateSelectors() {
         opt.value = k; opt.textContent = v.label;
         els.graphType.appendChild(opt);
     }
-    els.graphType.value = "tree";
+    els.graphType.value = "triangle";
 
     for (const [k, v] of Object.entries(STRATEGIES)) {
         const opt = document.createElement("option");
@@ -134,6 +134,10 @@ function buildAndRender() {
     let params;
     try {
         params = readParams(els.graphParams);
+        if (type === 'triangle') {
+            buildTriangleDemo();
+            return;
+        }
         graph = buildGraph(type, params);
     } catch (err) {
         alert(`Could not build graph: ${err.message}`);
