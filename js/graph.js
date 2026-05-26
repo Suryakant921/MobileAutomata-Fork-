@@ -198,6 +198,7 @@ function finiteLadder() {
     edges.push({ u: V(0), v: V(1), portU: 0, portV: 0 });
     edges.push({ u: V(1), v: V(2), portU: 2, portV: 2 });
     edges.push({ u: V(2), v: V(3), portU: 1, portV: 1 });
+    edges.push({ u: V(3), v: V(4), portU: 0, portV: 0 });
     edges.push({ u: U(0), v: U(1), portU: 0, portV: 0 });
     edges.push({ u: U(1), v: U(2), portU: 2, portV: 2 });
     edges.push({ u: U(2), v: U(3), portU: 1, portV: 1 });
