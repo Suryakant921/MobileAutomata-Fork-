@@ -23,6 +23,7 @@ const els = {
     play: document.getElementById("btn-play"),
     pause: document.getElementById("btn-pause"),
     reset: document.getElementById("btn-reset"),
+    transitionLog: document.getElementById("transition-log"),
     viz: document.getElementById("visualization"),
 };
 
@@ -33,6 +34,7 @@ let viz = null;
 let state = null;
 let phi = null;
 let playTimer = null;
+let stepCount = 0;
 
 // ----- parameter form helpers -----
 function renderParamInputs(container, defs, prefix) {
@@ -137,9 +139,12 @@ function buildAndRender() {
     }
     if (graph.numNodes === 0) { alert("Empty graph."); return; }
 
-    const start = Number.isFinite(parseInt(els.startNode.value, 10))
+    let start = Number.isFinite(parseInt(els.startNode.value, 10))
         ? parseInt(els.startNode.value, 10)
         : graph.rootId;
+    if (type === "path" && (isNaN(start) || start === 0)) {
+        start = Math.floor((graph.numNodes - 1) / 2);
+    }
     const rootId = (start >= 0 && start < graph.numNodes) ? start : graph.rootId;
     els.startNode.value = rootId;
     els.startNode.max = graph.numNodes - 1;
@@ -166,12 +171,46 @@ function resetWalk() {
         carried: state.carried === Infinity ? "∞" : state.carried,
         placed: 0,
     });
+    clearTransitionLog();
+    appendTransitionLog({
+        node: root,
+        entry: "⊥",
+        degree: graph.adj[root].length,
+        status: "start",
+        action: "Start",
+        exit: "-",
+    });
     // initialize mini-dashboard
     const miniNodeEl = document.getElementById('mini-node');
     const miniActionEl = document.getElementById('mini-action');
     if (miniNodeEl) miniNodeEl.textContent = String(root);
     if (miniActionEl) miniActionEl.textContent = 'Start';
     enableControls();
+}
+
+function clearTransitionLog() {
+    if (!els.transitionLog) return;
+    els.transitionLog.innerHTML = "";
+    stepCount = 0;
+}
+
+function appendTransitionLog({ node, entry, degree, status, action, exit }) {
+    if (!els.transitionLog) return;
+    stepCount += 1;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+        <td>${stepCount}</td>
+        <td>${node}</td>
+        <td>${entry}</td>
+        <td>${degree}</td>
+        <td>${status}</td>
+        <td>${action}</td>
+        <td>${exit}</td>
+    `;
+    els.transitionLog.prepend(row);
+    while (els.transitionLog.children.length > 20) {
+        els.transitionLog.removeChild(els.transitionLog.lastElementChild);
+    }
 }
 
 function doStep() {
@@ -197,6 +236,15 @@ function doStep() {
     const miniActionEl = document.getElementById('mini-action');
     if (miniNodeEl) miniNodeEl.textContent = String(state.currentNode);
     if (miniActionEl) miniActionEl.textContent = result.action ?? '-';
+
+    appendTransitionLog({
+        node: state.currentNode,
+        entry: state.entryPort ?? "⊥",
+        degree: graph.adj[state.currentNode].length,
+        status: result.status,
+        action: result.action ?? "-",
+        exit: result.exitPort ?? "-",
+    });
 
     if (result.terminated) {
         stopPlay();

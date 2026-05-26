@@ -77,6 +77,26 @@
             <div class="dashboard-item">Pebbles Placed: <span class="dashboard-value" id="disp-placed">-</span></div>
         </section>
 
+        <section class="panel">
+            <h3>Transition Log</h3>
+            <div class="log-wrapper">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Node</th>
+                            <th>Entry</th>
+                            <th>Degree</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                            <th>Exit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transition-log"></tbody>
+                </table>
+            </div>
+        </section>
+
         <p class="legend">
             DMA reads input <code>(p, d, b)</code> (entry port, degree, e/f) and emits
             <code>(p', a)</code> with <code>a ∈ {abstain, drop, pick}</code>.
