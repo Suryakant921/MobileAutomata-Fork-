@@ -253,11 +253,12 @@ function triangleGadget({ k, tailLen }) {
     const edges = [];
 
     const rootLeaf = id();          // v (leaf at a_1)
-    const a1 = id(); A.push(a1);
+    // Create A nodes so there are NUM_TRI+1 a_i (v-nodes) and NUM_TRI c_i (u-nodes)
+    A.push(id()); // a_0
     for (let i = 0; i < NUM_TRI; i++) {
-        if (i > 0) A.push(id());   // a_{i+1} appended
         B.push(id());
         C.push(id());
+        A.push(id()); // a_{i+1}
     }
     const tailLeaf = id();          // u (leaf at c_k)
 
@@ -285,9 +286,8 @@ function triangleGadget({ k, tailLen }) {
         }
         // chain via a_{i+1} = c_i (we keep them as separate nodes connected by
         // a degree-2 edge for visual clarity; the paper identifies them).
-        if (i + 1 < NUM_TRI) {
-            edges.push({ u: c, v: A[i + 1], portU: -1, portV: -1 }); // ports computed later
-        }
+        // chain via c_i — a_{i+1}
+        edges.push({ u: c, v: A[i + 1], portU: -1, portV: -1 }); // ports computed later
     }
 
     // assign default ports to chain edges and tail leaves where we left -1.
@@ -340,15 +340,19 @@ function triangleGadget({ k, tailLen }) {
     // Coordinate math matching the figure: symmetric spacing with simple offsets.
     const positions = {};
     positions[rootLeaf] = { x: 0, y: 0 };
-    for (let i = 0; i < NUM_TRI; i++) {
+    // A has NUM_TRI+1 entries (a_0..a_NUM_TRI)
+    for (let i = 0; i <= NUM_TRI; i++) {
+        // place a_i
         positions[A[i]] = { x: i * 100 + 50, y: 0 };
-        positions[B[i]] = { x: i * 100 + 50, y: -60 };
-        positions[C[i]] = { x: i * 100 + 100, y: 0 };
-        W[i].forEach((w, j) => {
-            positions[w] = { x: i * 100 + 50, y: -120 - j * 60 };
-        });
+        if (i < NUM_TRI) {
+            positions[B[i]] = { x: i * 100 + 50, y: -60 };
+            positions[C[i]] = { x: i * 100 + 100, y: 0 };
+            W[i].forEach((w, j) => {
+                positions[w] = { x: i * 100 + 50, y: -120 - j * 60 };
+            });
+        }
     }
-    positions[tailLeaf] = { x: (NUM_TRI - 1) * 100 + 200, y: 0 };
+    positions[tailLeaf] = { x: NUM_TRI * 100 + 150, y: 0 };
 
     return fromPortedEdges(node.count, edges, "preset", positions, rootLeaf);
 }
