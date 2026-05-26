@@ -14,13 +14,13 @@
 
 export const GRAPH_TYPES = {
     path: {
-        label: "Path",
-        params: [{ key: "n", label: "Nodes", default: 10, min: 2, max: 200 }],
+        label: "Infinite path (approximation)",
+        params: [{ key: "n", label: "Nodes", default: 120, min: 20, max: 400 }],
         build: ({ n }) => fromEdgeList(n, range(n - 1).map(i => [i, i + 1]), "tree"),
     },
     cycle: {
         label: "Ring (Cycle)",
-        params: [{ key: "n", label: "Nodes", default: 8, min: 3, max: 200 }],
+        params: [{ key: "n", label: "Nodes", default: 16, min: 3, max: 400 }],
         build: ({ n }) => fromEdgeList(n, range(n).map(i => [i, (i + 1) % n]), "circle"),
     },
     tree: {
@@ -39,17 +39,17 @@ export const GRAPH_TYPES = {
     classD: {
         label: "Class D (∞-path + finite branches)",
         params: [
-            { key: "trunkLen", label: "Visible trunk length", default: 8, min: 2, max: 40 },
-            { key: "iStar", label: "Branching node v_i", default: 2, min: 0, max: 40 },
+            { key: "trunkLen", label: "Visible trunk length", default: 40, min: 8, max: 200 },
+            { key: "iStar", label: "Branching node v_i", default: 5, min: 0, max: 200 },
             { key: "branches", label: "Branches at v_i (#)", default: 2, min: 1, max: 6 },
-            { key: "branchLen", label: "Branch length", default: 2, min: 1, max: 10 },
+            { key: "branchLen", label: "Branch length", default: 4, min: 1, max: 16 },
         ],
         build: classDTree,
     },
     classCI: {
-        label: "Class C_I (two ∞-paths)",
+        label: "Class C_I (two infinite paths)",
         params: [
-            { key: "armLen", label: "Visible arm length", default: 6, min: 1, max: 30 },
+            { key: "armLen", label: "Visible arm length", default: 100, min: 10, max: 200 },
         ],
         build: classCITree,
     },
@@ -61,8 +61,8 @@ export const GRAPH_TYPES = {
     triangle: {
         label: "Triangle gadget (Fig. 4)",
         params: [
-            { key: "k", label: "# triangles", default: 4, min: 3, max: 9 },
-            { key: "tailLen", label: "Path w_i length", default: 3, min: 1, max: 8 },
+            { key: "k", label: "# triangles", default: 9, min: 3, max: 9 },
+            { key: "tailLen", label: "Path w_i length", default: 4, min: 1, max: 8 },
         ],
         build: triangleGadget,
     },
@@ -208,7 +208,9 @@ function finiteLadder() {
     edges.push({ u: U(3), v: V(3), portU: 2, portV: 2 });
     edges.push({ u: U(4), v: V(4), portU: 2, portV: 2 });
 
-    // path u_3 - u_4 - u_5 - v_5 - v_4 : ports [a,0,1,b]
+    // path u_3 - u_4 - u_5 - v_5 - v_4 : port sequence [a,0,1,b]
+    // This explicitly locks the ladder bottleneck so a memoryless agent
+    // must backtrack rather than slip through on an alternate port ordering.
     edges.push({ u: U(3), v: U(4), portU: 0, portV: 1 });
     edges.push({ u: U(4), v: U(5), portU: 0, portV: 1 });
     edges.push({ u: U(5), v: V(5), portU: 0, portV: 1 });
