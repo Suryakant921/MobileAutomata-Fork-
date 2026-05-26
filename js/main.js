@@ -2,6 +2,7 @@ import { GRAPH_TYPES, buildGraph } from "./graph.js";
 import { STRATEGIES, buildPhi } from "./strategies.js";
 import { createState, step, TERMINATION } from "./dma.js";
 import { createVisualization } from "./visualization.js";
+import { generateTriangularGadgetGraph } from "./triangularGraph.js";
 import { createDashboard } from "./dashboard.js";
 import { renderTransitionEditor, collectDegrees } from "./transitionEditor.js";
 
@@ -23,6 +24,7 @@ const els = {
     play: document.getElementById("btn-play"),
     pause: document.getElementById("btn-pause"),
     reset: document.getElementById("btn-reset"),
+    buildTriangle: document.getElementById("btn-build-triangle"),
     transitionLog: document.getElementById("transition-log"),
     viz: document.getElementById("visualization"),
 };
@@ -157,6 +159,28 @@ function buildAndRender() {
     resetWalk();
 }
 
+// Render triangular gadget graph for visual demo (no DMA simulation)
+function buildTriangleDemo() {
+    stopPlay();
+    const G = generateTriangularGadgetGraph();
+
+    // Prepare data for createVisualization
+    const nodes = G.nodes.map(n => ({ id: n.id }));
+    const edges = G.links.map(l => ({ u: l.source, v: l.target, portU: String(l.label), portV: String(l.label) }));
+    const positions = {};
+    for (const n of G.nodes) positions[n.id] = { x: n.x, y: n.y };
+
+    const vizGraph = { nodes, edges, positions, rootId: 'v', layoutHint: 'preset' };
+
+    if (viz) viz.destroy();
+    viz = createVisualization(els.viz, vizGraph);
+
+    // Disable DMA controls since this demo uses string ids
+    els.step.disabled = true;
+    els.play.disabled = true;
+    els.pause.disabled = true;
+}
+
 function resetWalk() {
     if (!graph || !viz) return;
     stopPlay();
@@ -284,6 +308,7 @@ function init() {
     els.strategy.addEventListener("change", renderStrategyParams);
     els.applyStrategy.addEventListener("click", applyStrategy);
     els.build.addEventListener("click", buildAndRender);
+    els.buildTriangle.addEventListener("click", buildTriangleDemo);
     els.step.addEventListener("click", doStep);
     els.play.addEventListener("click", startPlay);
     els.pause.addEventListener("click", stopPlay);
