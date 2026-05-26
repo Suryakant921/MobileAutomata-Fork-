@@ -60,10 +60,7 @@ export const GRAPH_TYPES = {
     },
     triangle: {
         label: "Triangle gadget (Fig. 4)",
-        params: [
-            { key: "k", label: "# triangles", default: 9, min: 3, max: 9 },
-            { key: "tailLen", label: "Path w_i length", default: 2, min: 1, max: 8 },
-        ],
+        params: [],
         build: triangleGadget,
     },
 };
@@ -236,123 +233,45 @@ function finiteLadder() {
 }
 
 // ------------------------------------------------------------------
-// Triangle gadget of Fig. 4 (parameterised by # triangles k, tail length).
-// Each triangle T_i has nodes a_i, b_i, c_i. Triangles chained via a_{i+1}=c_i.
-// b_i grows an infinite (finite-truncated) path w_i^1, w_i^2, ... each with
-// a leaf attached. Leaves attached to a_1 (root v) and c_k (node u).
-// We pick the simple "p,q,r = 0,1,2" labelling for T_1..T_6 and
-// "[a_i,q,p,b_i], [b_i,q,p,c_i], [c_i,q,p,a_i]" for the others.
 // ------------------------------------------------------------------
-function triangleGadget({ k, tailLen }) {
-    // Force the construction used in the paper figure: exactly 9 triangles.
-    const NUM_TRI = 9;
-    const node = { count: 0 };
-    const id = () => node.count++;
-    const A = [], B = [], C = [], W = []; // W[i] is an array of w_i^j ids
-    const leaves = {}; // {nodeId: leafId}
+// Triangle gadget of Fig. 4: 10 base nodes along a straight horizontal line
+// and 9 peak nodes placed above the midpoints. Explicit ports fix the
+// movement rules, and the preset layout locks node positions.
+// ------------------------------------------------------------------
+function triangleGadget() {
+    const baseCount = 10;
+    const peakCount = baseCount - 1;
+    const numNodes = baseCount + peakCount;
     const edges = [];
-
-    const rootLeaf = id();          // v (leaf at a_1)
-    // Create A nodes so there are NUM_TRI+1 a_i (v-nodes) and NUM_TRI c_i (u-nodes)
-    A.push(id()); // a_0
-    for (let i = 0; i < NUM_TRI; i++) {
-        B.push(id());
-        C.push(id());
-        A.push(id()); // a_{i+1}
-    }
-    const tailLeaf = id();          // u (leaf at c_k)
-
-    // Triangle edges. For i=0..min(k,6)-1 we use the "all 6 orderings" scheme
-    // but we just deterministically pick one ordering per triangle so the
-    // simulator stays tractable. Orderings rotate (p,q,r) through the 6
-    // permutations of {0,1,2}.
-    const perms = [
-        [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
-    ];
-
-    for (let i = 0; i < NUM_TRI; i++) {
-        const a = A[i], b = B[i], c = C[i];
-        if (i < 6) {
-            const [p, q, r] = perms[i];
-            // [a_i,q,p,b_i], [b_i,r,p,c_i], [c_i,q,r,a_i]
-            edges.push({ u: a, v: b, portU: q, portV: p });
-            edges.push({ u: b, v: c, portU: r, portV: p });
-            edges.push({ u: c, v: a, portU: q, portV: r });
-        } else {
-            const [p, q] = [0, 1]; // any p≠q
-            edges.push({ u: a, v: b, portU: q, portV: p });
-            edges.push({ u: b, v: c, portU: q, portV: p });
-            edges.push({ u: c, v: a, portU: q, portV: p });
-        }
-        // chain via a_{i+1} = c_i (we keep them as separate nodes connected by
-        // a degree-2 edge for visual clarity; the paper identifies them).
-        // chain via c_i — a_{i+1}
-        edges.push({ u: c, v: A[i + 1], portU: -1, portV: -1 }); // ports computed later
-    }
-
-    // assign default ports to chain edges and tail leaves where we left -1.
-    // For chain c_i — a_{i+1}: pick the lowest unused port at each end.
-    const portsUsed = Array.from({ length: node.count }, () => new Set());
-    for (const e of edges) {
-        if (e.portU >= 0) portsUsed[e.u].add(e.portU);
-        if (e.portV >= 0) portsUsed[e.v].add(e.portV);
-    }
-    function lowestFree(n) {
-        let p = 0;
-        while (portsUsed[n].has(p)) p++;
-        portsUsed[n].add(p);
-        return p;
-    }
-    for (const e of edges) {
-        if (e.portU < 0) e.portU = lowestFree(e.u);
-        if (e.portV < 0) e.portV = lowestFree(e.v);
-    }
-
-    // root leaf attached to a_1, tail leaf attached to c_k
-    edges.push({ u: rootLeaf, v: A[0], portU: 0, portV: lowestFree(A[0]) });
-    edges.push({ u: tailLeaf, v: C[NUM_TRI - 1], portU: 0, portV: lowestFree(C[NUM_TRI - 1]) });
-    leaves[A[0]] = rootLeaf;
-    leaves[C[k - 1]] = tailLeaf;
-
-    // tails w_i^1..w_i^tailLen with leaves on each
-    for (let i = 0; i < NUM_TRI; i++) {
-        const tail = [];
-        let prev = B[i];
-        let prevPort = lowestFree(B[i]); // port at b_i toward w_i^1
-        for (let j = 0; j < tailLen; j++) {
-            const w = id();
-            portsUsed.push(new Set());
-            tail.push(w);
-            edges.push({ u: prev, v: w, portU: prevPort, portV: 0 });
-            portsUsed[w].add(0);
-            // leaf
-            const leaf = id();
-            portsUsed.push(new Set());
-            edges.push({ u: w, v: leaf, portU: 1, portV: 0 });
-            portsUsed[w].add(1);
-            prev = w;
-            prevPort = 2;
-        }
-        W.push(tail);
-    }
-
-    // positions: layout in horizontal chain
-    // Coordinate math matching the figure: symmetric spacing with simple offsets.
     const positions = {};
-    positions[rootLeaf] = { x: 0, y: 0 };
-    // A has NUM_TRI+1 entries (a_0..a_NUM_TRI)
-    for (let i = 0; i <= NUM_TRI; i++) {
-        // place a_i
-        positions[A[i]] = { x: i * 100 + 50, y: 0 };
-        if (i < NUM_TRI) {
-            positions[B[i]] = { x: i * 100 + 50, y: -60 };
-            positions[C[i]] = { x: i * 100 + 100, y: 0 };
-            W[i].forEach((w, j) => {
-                positions[w] = { x: i * 100 + 50, y: -120 - j * 60 };
-            });
-        }
-    }
-    positions[tailLeaf] = { x: NUM_TRI * 100 + 150, y: 0 };
 
-    return fromPortedEdges(node.count, edges, "preset", positions, rootLeaf);
+    // Place base nodes in a horizontal backbone.
+    for (let i = 0; i < baseCount; i++) {
+        positions[i] = { x: i * 100, y: 0 };
+    }
+
+    // Place peaks between consecutive base nodes.
+    for (let i = 0; i < peakCount; i++) {
+        const peakId = baseCount + i;
+        positions[peakId] = { x: i * 100 + 50, y: -80 };
+    }
+
+    // Horizontal backbone edges. Base0 has port0 to Base1.
+    edges.push({ u: 0, v: 1, portU: 0, portV: 0 });
+    for (let i = 1; i < baseCount - 1; i++) {
+        edges.push({ u: i, v: i + 1, portU: 1, portV: 0 });
+    }
+
+    // Connect each peak to its two supporting base nodes.
+    for (let i = 0; i < peakCount; i++) {
+        const peakId = baseCount + i;
+        const leftBase = i;
+        const rightBase = i + 1;
+        const leftPort = leftBase === 0 ? 1 : 2;
+        const rightPort = rightBase === baseCount - 1 ? 1 : 2;
+        edges.push({ u: peakId, v: leftBase, portU: 0, portV: leftPort });
+        edges.push({ u: peakId, v: rightBase, portU: 1, portV: rightPort });
+    }
+
+    return fromPortedEdges(numNodes, edges, "preset", positions, 0);
 }
