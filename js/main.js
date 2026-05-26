@@ -166,6 +166,11 @@ function resetWalk() {
         carried: state.carried === Infinity ? "∞" : state.carried,
         placed: 0,
     });
+    // initialize mini-dashboard
+    const miniNodeEl = document.getElementById('mini-node');
+    const miniActionEl = document.getElementById('mini-action');
+    if (miniNodeEl) miniNodeEl.textContent = String(root);
+    if (miniActionEl) miniActionEl.textContent = 'Start';
     enableControls();
 }
 
@@ -186,6 +191,12 @@ function doStep() {
         carried: state.carried === Infinity ? "∞" : state.carried,
         placed,
     });
+
+    // update mini-dashboard
+    const miniNodeEl = document.getElementById('mini-node');
+    const miniActionEl = document.getElementById('mini-action');
+    if (miniNodeEl) miniNodeEl.textContent = String(state.currentNode);
+    if (miniActionEl) miniActionEl.textContent = result.action ?? '-';
 
     if (result.terminated) {
         stopPlay();

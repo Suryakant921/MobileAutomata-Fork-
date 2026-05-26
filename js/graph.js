@@ -244,6 +244,8 @@ function finiteLadder() {
 // "[a_i,q,p,b_i], [b_i,q,p,c_i], [c_i,q,p,a_i]" for the others.
 // ------------------------------------------------------------------
 function triangleGadget({ k, tailLen }) {
+    // Force the construction used in the paper figure: exactly 9 triangles.
+    const NUM_TRI = 9;
     const node = { count: 0 };
     const id = () => node.count++;
     const A = [], B = [], C = [], W = []; // W[i] is an array of w_i^j ids
@@ -252,7 +254,7 @@ function triangleGadget({ k, tailLen }) {
 
     const rootLeaf = id();          // v (leaf at a_1)
     const a1 = id(); A.push(a1);
-    for (let i = 0; i < k; i++) {
+    for (let i = 0; i < NUM_TRI; i++) {
         if (i > 0) A.push(id());   // a_{i+1} appended
         B.push(id());
         C.push(id());
@@ -267,7 +269,7 @@ function triangleGadget({ k, tailLen }) {
         [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
     ];
 
-    for (let i = 0; i < k; i++) {
+    for (let i = 0; i < NUM_TRI; i++) {
         const a = A[i], b = B[i], c = C[i];
         if (i < 6) {
             const [p, q, r] = perms[i];
@@ -283,7 +285,7 @@ function triangleGadget({ k, tailLen }) {
         }
         // chain via a_{i+1} = c_i (we keep them as separate nodes connected by
         // a degree-2 edge for visual clarity; the paper identifies them).
-        if (i + 1 < k) {
+        if (i + 1 < NUM_TRI) {
             edges.push({ u: c, v: A[i + 1], portU: -1, portV: -1 }); // ports computed later
         }
     }
@@ -308,12 +310,12 @@ function triangleGadget({ k, tailLen }) {
 
     // root leaf attached to a_1, tail leaf attached to c_k
     edges.push({ u: rootLeaf, v: A[0], portU: 0, portV: lowestFree(A[0]) });
-    edges.push({ u: tailLeaf, v: C[k - 1], portU: 0, portV: lowestFree(C[k - 1]) });
+    edges.push({ u: tailLeaf, v: C[NUM_TRI - 1], portU: 0, portV: lowestFree(C[NUM_TRI - 1]) });
     leaves[A[0]] = rootLeaf;
     leaves[C[k - 1]] = tailLeaf;
 
     // tails w_i^1..w_i^tailLen with leaves on each
-    for (let i = 0; i < k; i++) {
+    for (let i = 0; i < NUM_TRI; i++) {
         const tail = [];
         let prev = B[i];
         let prevPort = lowestFree(B[i]); // port at b_i toward w_i^1
@@ -335,18 +337,18 @@ function triangleGadget({ k, tailLen }) {
     }
 
     // positions: layout in horizontal chain
+    // Coordinate math matching the figure: symmetric spacing with simple offsets.
     const positions = {};
-    const xs = i => 120 + i * 140;
     positions[rootLeaf] = { x: 0, y: 0 };
-    for (let i = 0; i < k; i++) {
-        positions[A[i]] = { x: xs(i), y: 0 };
-        positions[B[i]] = { x: xs(i) + 50, y: -60 };
-        positions[C[i]] = { x: xs(i) + 100, y: 0 };
+    for (let i = 0; i < NUM_TRI; i++) {
+        positions[A[i]] = { x: i * 100 + 50, y: 0 };
+        positions[B[i]] = { x: i * 100 + 50, y: -60 };
+        positions[C[i]] = { x: i * 100 + 100, y: 0 };
         W[i].forEach((w, j) => {
-            positions[w] = { x: xs(i) + 50, y: -120 - j * 60 };
+            positions[w] = { x: i * 100 + 50, y: -120 - j * 60 };
         });
     }
-    positions[tailLeaf] = { x: xs(k - 1) + 180, y: 0 };
+    positions[tailLeaf] = { x: (NUM_TRI - 1) * 100 + 200, y: 0 };
 
     return fromPortedEdges(node.count, edges, "preset", positions, rootLeaf);
 }
