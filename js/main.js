@@ -164,21 +164,47 @@ function buildTriangleDemo() {
     stopPlay();
     const G = generateTriangularGadgetGraph();
 
-    // Prepare data for createVisualization
-    const nodes = G.nodes.map(n => ({ id: n.id }));
-    const edges = G.links.map(l => ({ u: l.source, v: l.target, portU: String(l.label), portV: String(l.label) }));
-    const positions = {};
-    for (const n of G.nodes) positions[n.id] = { x: n.x, y: n.y };
+    // Convert G (string ids) into numeric-indexed ported graph for DMA
+    const ids = G.nodes.map(n => n.id);
+    const idToIndex = Object.fromEntries(ids.map((id, i) => [id, i]));
+    const numNodes = ids.length;
 
-    const vizGraph = { nodes, edges, positions, rootId: 'v', layoutHint: 'preset' };
+    // positions keyed by numeric index
+    const positions = {};
+    for (const n of G.nodes) positions[idToIndex[n.id]] = { x: n.x, y: n.y };
+
+    // build adjacency and ported edges deterministically by encountering links
+    const adj = Array.from({ length: numNodes }, () => []);
+    const portedEdges = [];
+    for (const l of G.links) {
+        const u = idToIndex[l.source];
+        const v = idToIndex[l.target];
+        const portU = adj[u].length;
+        const portV = adj[v].length;
+        adj[u].push({ neighbor: v, port: portU, neighborPort: portV });
+        adj[v].push({ neighbor: u, port: portV, neighborPort: portU });
+        portedEdges.push({ u, v, portU, portV });
+    }
+
+    const nodesArr = Array.from({ length: numNodes }, (_, i) => ({ id: i, hasPebble: false }));
+
+    // Build graph object compatible with simulation code
+    graph = {
+        numNodes,
+        edges: portedEdges,
+        adj,
+        nodes: nodesArr,
+        layoutHint: 'preset',
+        positions,
+        rootId: idToIndex['v'] ?? 0,
+    };
 
     if (viz) viz.destroy();
-    viz = createVisualization(els.viz, vizGraph);
+    viz = createVisualization(els.viz, { nodes: nodesArr, edges: portedEdges, positions, rootId: graph.rootId });
 
-    // Disable DMA controls since this demo uses string ids
-    els.step.disabled = true;
-    els.play.disabled = true;
-    els.pause.disabled = true;
+    // initialize strategy and simulation state so DMA controls work
+    applyStrategy();
+    resetWalk();
 }
 
 function resetWalk() {
