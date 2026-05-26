@@ -62,7 +62,7 @@ export const GRAPH_TYPES = {
         label: "Triangle gadget (Fig. 4)",
         params: [
             { key: "k", label: "# triangles", default: 9, min: 3, max: 9 },
-            { key: "tailLen", label: "Path w_i length", default: 4, min: 1, max: 8 },
+            { key: "tailLen", label: "Path w_i length", default: 2, min: 1, max: 8 },
         ],
         build: triangleGadget,
     },
