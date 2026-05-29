@@ -78,12 +78,18 @@ export function createVisualization(container, graph) {
         return String(a.id).localeCompare(String(b.id));
     });
 
+    const sortedEdges = [...edges].sort((a, b) => {
+        if (a.u !== b.u) return a.u - b.u;
+        if (a.v !== b.v) return a.v - b.v;
+        return a.portU - b.portU;
+    });
+
     const elements = [
         ...sortedNodes.map(n => ({
             data: { id: String(n.id) },
             position: positions && positions[n.id] ? { ...positions[n.id] } : undefined,
         })),
-        ...edges.map((e, i) => ({
+        ...sortedEdges.map((e, i) => ({
             data: {
                 id: `e${i}`,
                 source: String(e.u),
