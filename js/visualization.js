@@ -67,8 +67,11 @@ const STYLE = [
 export function createVisualization(container, graph) {
     const { nodes, edges, rootId, layoutHint, positions } = graph;
 
+    // Sort nodes numerically by ID to ensure correct order
+    const sortedNodes = [...nodes].sort((a, b) => a.id - b.id);
+
     const elements = [
-        ...nodes.map(n => ({
+        ...sortedNodes.map(n => ({
             data: { id: String(n.id) },
             position: positions && positions[n.id] ? { ...positions[n.id] } : undefined,
         })),
