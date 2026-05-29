@@ -67,8 +67,16 @@ const STYLE = [
 export function createVisualization(container, graph) {
     const { nodes, edges, rootId, layoutHint, positions } = graph;
 
-    // Sort nodes numerically by ID to ensure correct order
-    const sortedNodes = [...nodes].sort((a, b) => a.id - b.id);
+    const sortedNodes = [...nodes].sort((a, b) => {
+        const aNum = Number(a.id);
+        const bNum = Number(b.id);
+        const aIsNum = !Number.isNaN(aNum);
+        const bIsNum = !Number.isNaN(bNum);
+        if (aIsNum && bIsNum) return aNum - bNum;
+        if (aIsNum) return -1;
+        if (bIsNum) return 1;
+        return String(a.id).localeCompare(String(b.id));
+    });
 
     const elements = [
         ...sortedNodes.map(n => ({

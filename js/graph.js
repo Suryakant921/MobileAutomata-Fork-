@@ -16,7 +16,11 @@ export const GRAPH_TYPES = {
     path: {
         label: "Infinite path (approximation)",
         params: [{ key: "n", label: "Nodes", default: 120, min: 20, max: 400 }],
-        build: ({ n }) => fromEdgeList(n, range(n - 1).map(i => [i, i + 1]), "tree"),
+        build: ({ n }) => {
+            const edges = range(n - 1).map(i => [i, i + 1]);
+            const positions = Object.fromEntries(range(n).map(i => [i, { x: i * 80, y: 0 }]));
+            return fromEdgeList(n, edges, "preset", positions);
+        },
     },
     cycle: {
         label: "Ring (Cycle)",
