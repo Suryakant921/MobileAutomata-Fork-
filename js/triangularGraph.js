@@ -25,7 +25,7 @@ export function generateTriangularGadgetGraph(opts = {}) {
     const TOP_Y = opts.TOP_Y ?? 200;
     const BOTTOM_Y = opts.BOTTOM_Y ?? 400;
     const START_X = opts.START_X ?? 10;
-    const GADGETS = opts.GADGETS ?? 8; // number of triangular gadgets per row
+    const GADGETS = opts.GADGETS ?? 9; // number of triangular gadgets per row
 
     let labelCounter = 0;
     function nextLabel() { return labelCounter++ % 3; }

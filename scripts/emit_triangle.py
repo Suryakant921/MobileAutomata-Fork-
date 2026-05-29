@@ -16,7 +16,7 @@ def generate_triangular_graph(opts=None):
     TOP_Y = opts.get('TOP_Y', 200)
     BOTTOM_Y = opts.get('BOTTOM_Y', 400)
     START_X = opts.get('START_X', 10)
-    GADGETS = opts.get('GADGETS', 8)
+    GADGETS = opts.get('GADGETS', 9)
 
     nodes = []
     links = []
