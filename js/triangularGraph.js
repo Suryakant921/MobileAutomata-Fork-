@@ -26,6 +26,7 @@ export function generateTriangularGadgetGraph(opts = {}) {
     const BOTTOM_Y = opts.BOTTOM_Y ?? 400;
     const START_X = opts.START_X ?? 10;
     const GADGETS = opts.GADGETS ?? 9; // number of triangular gadgets per row
+    const MIRROR = opts.MIRROR ?? false; // whether to create a mirrored bottom row (default: false)
 
     let labelCounter = 0;
     function nextLabel() { return labelCounter++ % 3; }
@@ -98,75 +99,77 @@ export function generateTriangularGadgetGraph(opts = {}) {
         }
     }
 
-    // Create turn nodes to curve from top end to bottom start
-    const lastTopC = topC[topC.length - 1];
-    const lastTopX = G.nodes.find(n => n.id === lastTopC).x;
-    const turnNodes = [];
-    for (let s = 0; s < TURN_SEGMENTS; s++) {
-        const tX = lastTopX + TURN_RIGHT_OFFSET + s * (TURN_RIGHT_OFFSET / TURN_SEGMENTS);
-        const tY = TOP_Y + Math.round((s+1) * (TURN_DROP / TURN_SEGMENTS));
-        const tId = `turn_${s+1}`;
-        addNode(tId, tX, tY, null, { hidden: true });
-        turnNodes.push(tId);
-    }
-    // link from last top c to first turn, then chain turns
-    addLink(lastTopC, turnNodes[0]);
-    for (let i = 0; i < turnNodes.length - 1; i++) addLink(turnNodes[i], turnNodes[i+1]);
-
-    // Bottom row gadgets: place mirrored gadgets going right-to-left
-    const bottomA = [];
-    const bottomB = [];
-    const bottomC = [];
-
-    // bottomStartX slightly to the right of the last turn node
-    const bottomStartX = G.nodes.find(n => n.id === turnNodes[turnNodes.length - 1]).x + TURN_RIGHT_OFFSET;
-    for (let i = 0; i < GADGETS; i++) {
-        // index i=0 will be the rightmost triangle on the bottom row
-        const aX = bottomStartX - i * (TRIANGLE_WIDTH + SPINE_X_STEP) - TRIANGLE_WIDTH;
-        const cX = aX + TRIANGLE_WIDTH;
-        const aId = `a_b${i+1}`;
-        const cId = `c_b${i+1}`;
-        const bId = `b_b${i+1}`;
-        addNode(aId, aX, BOTTOM_Y, aId);
-        addNode(cId, cX, BOTTOM_Y, cId);
-        addNode(bId, (aX + cX) / 2, BOTTOM_Y + TRIANGLE_HEIGHT, bId);
-        bottomA.push(aId); bottomB.push(bId); bottomC.push(cId);
-    }
-
-    // connect turn end to first bottom a (the rightmost bottom a)
-    addLink(turnNodes[turnNodes.length - 1], bottomA[0]);
-
-    // bottom gadget edges and spine links (right-to-left)
-    for (let i = 0; i < GADGETS; i++) {
-        addLink(bottomA[i], bottomC[i]);
-        addLink(bottomA[i], bottomB[i]);
-        addLink(bottomB[i], bottomC[i]);
-        if (i < GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
-    }
-
-    // Antennae from bottom b nodes (down-right)
-    for (let i = 0; i < GADGETS; i++) {
-        let prev = bottomB[i];
-        let baseX = (G.nodes.find(n => n.id === prev).x);
-        let baseY = (G.nodes.find(n => n.id === prev).y);
-        for (let d = 1; d <= ANTENNA_DEPTH; d++) {
-            const wId = `w_b${i+1}_${d}`;
-            const wX = baseX + d * ANTENNA_X_STEP;
-            const wY = baseY + d * ANTENNA_Y_STEP;
-            addNode(wId, wX, wY, wId);
-            addLink(prev, wId);
-            const leafId = `leaf_b${i+1}_${d}`;
-            addNode(leafId, wX + LEAF_OFFSET, wY, leafId);
-            addLink(wId, leafId);
-            prev = wId;
+    if (MIRROR) {
+        // Create turn nodes to curve from top end to bottom start
+        const lastTopC = topC[topC.length - 1];
+        const lastTopX = G.nodes.find(n => n.id === lastTopC).x;
+        const turnNodes = [];
+        for (let s = 0; s < TURN_SEGMENTS; s++) {
+            const tX = lastTopX + TURN_RIGHT_OFFSET + s * (TURN_RIGHT_OFFSET / TURN_SEGMENTS);
+            const tY = TOP_Y + Math.round((s+1) * (TURN_DROP / TURN_SEGMENTS));
+            const tId = `turn_${s+1}`;
+            addNode(tId, tX, tY, null, { hidden: true });
+            turnNodes.push(tId);
         }
-    }
+        // link from last top c to first turn, then chain turns
+        addLink(lastTopC, turnNodes[0]);
+        for (let i = 0; i < turnNodes.length - 1; i++) addLink(turnNodes[i], turnNodes[i+1]);
 
-    // Final terminal node u on the far left (end of bottom spine)
-    const lastBottomC = bottomC[bottomC.length - 1];
-    const uId = 'u';
-    addNode(uId, G.nodes.find(n => n.id === lastBottomC).x - SPINE_X_STEP, BOTTOM_Y, 'u');
-    addLink(lastBottomC, uId);
+        // Bottom row gadgets: place mirrored gadgets going right-to-left
+        const bottomA = [];
+        const bottomB = [];
+        const bottomC = [];
+
+        // bottomStartX slightly to the right of the last turn node
+        const bottomStartX = G.nodes.find(n => n.id === turnNodes[turnNodes.length - 1]).x + TURN_RIGHT_OFFSET;
+        for (let i = 0; i < GADGETS; i++) {
+            // index i=0 will be the rightmost triangle on the bottom row
+            const aX = bottomStartX - i * (TRIANGLE_WIDTH + SPINE_X_STEP) - TRIANGLE_WIDTH;
+            const cX = aX + TRIANGLE_WIDTH;
+            const aId = `a_b${i+1}`;
+            const cId = `c_b${i+1}`;
+            const bId = `b_b${i+1}`;
+            addNode(aId, aX, BOTTOM_Y, aId);
+            addNode(cId, cX, BOTTOM_Y, cId);
+            addNode(bId, (aX + cX) / 2, BOTTOM_Y + TRIANGLE_HEIGHT, bId);
+            bottomA.push(aId); bottomB.push(bId); bottomC.push(cId);
+        }
+
+        // connect turn end to first bottom a (the rightmost bottom a)
+        addLink(turnNodes[turnNodes.length - 1], bottomA[0]);
+
+        // bottom gadget edges and spine links (right-to-left)
+        for (let i = 0; i < GADGETS; i++) {
+            addLink(bottomA[i], bottomC[i]);
+            addLink(bottomA[i], bottomB[i]);
+            addLink(bottomB[i], bottomC[i]);
+            if (i < GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
+        }
+
+        // Antennae from bottom b nodes (down-right)
+        for (let i = 0; i < GADGETS; i++) {
+            let prev = bottomB[i];
+            let baseX = (G.nodes.find(n => n.id === prev).x);
+            let baseY = (G.nodes.find(n => n.id === prev).y);
+            for (let d = 1; d <= ANTENNA_DEPTH; d++) {
+                const wId = `w_b${i+1}_${d}`;
+                const wX = baseX + d * ANTENNA_X_STEP;
+                const wY = baseY + d * ANTENNA_Y_STEP;
+                addNode(wId, wX, wY, wId);
+                addLink(prev, wId);
+                const leafId = `leaf_b${i+1}_${d}`;
+                addNode(leafId, wX + LEAF_OFFSET, wY, leafId);
+                addLink(wId, leafId);
+                prev = wId;
+            }
+        }
+
+        // Final terminal node u on the far left (end of bottom spine)
+        const lastBottomC = bottomC[bottomC.length - 1];
+        const uId = 'u';
+        addNode(uId, G.nodes.find(n => n.id === lastBottomC).x - SPINE_X_STEP, BOTTOM_Y, 'u');
+        addLink(lastBottomC, uId);
+    }
 
     return G;
 }
