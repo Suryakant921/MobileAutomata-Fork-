@@ -187,7 +187,7 @@ function buildTriangleDemo() {
         const portV = adj[v].length;
         adj[u].push({ neighbor: v, port: portU, neighborPort: portV });
         adj[v].push({ neighbor: u, port: portV, neighborPort: portU });
-        portedEdges.push({ u, v, portU, portV, weight: l.weight });
+        portedEdges.push({ u, v, portU, portV });
     }
 
     const nodesArr = Array.from({ length: numNodes }, (_, i) => ({ id: i, hasPebble: false }));
