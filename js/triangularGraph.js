@@ -25,7 +25,8 @@ export function generateTriangularGadgetGraph(opts = {}) {
     const TOP_Y = opts.TOP_Y ?? 200;
     const BOTTOM_Y = opts.BOTTOM_Y ?? 400;
     const START_X = opts.START_X ?? 10;
-    const GADGETS = opts.GADGETS ?? 9; // number of triangular gadgets per row
+    const TOP_GADGETS = 6; // top row triangles a1..a6
+    const BOTTOM_GADGETS = 3; // bottom row triangles a7..a9
 
     let labelCounter = 0;
     function nextLabel() { return labelCounter++ % 3; }
@@ -49,14 +50,14 @@ export function generateTriangularGadgetGraph(opts = {}) {
     const vId = 'v';
     addNode(vId, START_X, TOP_Y, 'v');
 
-    // Top row gadgets: produce a_i, b_i, c_i for i=1..GADGETS
+    // Top row gadgets: produce a_i, b_i, c_i for i=1..TOP_GADGETS
     const topA = [];
     const topB = [];
     const topC = [];
 
     // We'll place a_1 at START_X + one SPINE_X_STEP to leave space for v
     const firstA_X = START_X + SPINE_X_STEP;
-    for (let i = 0; i < GADGETS; i++) {
+    for (let i = 0; i < TOP_GADGETS; i++) {
         const aX = firstA_X + i * (TRIANGLE_WIDTH + SPINE_X_STEP);
         const cX = aX + TRIANGLE_WIDTH;
         const aId = `a_t${i+1}`;
@@ -72,15 +73,15 @@ export function generateTriangularGadgetGraph(opts = {}) {
     addLink(vId, topA[0]);
 
     // Top gadget edges and spine links
-    for (let i = 0; i < GADGETS; i++) {
+    for (let i = 0; i < TOP_GADGETS; i++) {
         addLink(topA[i], topC[i]); // base edge along spine
         addLink(topA[i], topB[i]); // left leg
         addLink(topB[i], topC[i]); // right leg
-        if (i < GADGETS - 1) addLink(topC[i], topA[i+1]); // spine connection
+        if (i < TOP_GADGETS - 1) addLink(topC[i], topA[i+1]); // spine connection
     }
 
     // Antennae from each b_i (top row) with leaf nodes
-    for (let i = 0; i < GADGETS; i++) {
+    for (let i = 0; i < TOP_GADGETS; i++) {
         let prev = topB[i];
         let baseX = (G.nodes.find(n => n.id === prev).x);
         let baseY = (G.nodes.find(n => n.id === prev).y);
@@ -113,39 +114,39 @@ export function generateTriangularGadgetGraph(opts = {}) {
     addLink(lastTopC, turnNodes[0]);
     for (let i = 0; i < turnNodes.length - 1; i++) addLink(turnNodes[i], turnNodes[i+1]);
 
-    // Bottom row gadgets: place mirrored gadgets going right-to-left
+    // Bottom row gadgets: place a7..a9 right-to-left
     const bottomA = [];
     const bottomB = [];
     const bottomC = [];
 
     // bottomStartX slightly to the right of the last turn node
     const bottomStartX = G.nodes.find(n => n.id === turnNodes[turnNodes.length - 1]).x + TURN_RIGHT_OFFSET;
-    for (let i = 0; i < GADGETS; i++) {
-        // index i=0 will be the rightmost triangle on the bottom row
+    for (let i = 0; i < BOTTOM_GADGETS; i++) {
+        const aIndex = TOP_GADGETS + i + 1;
         const aX = bottomStartX - i * (TRIANGLE_WIDTH + SPINE_X_STEP) - TRIANGLE_WIDTH;
         const cX = aX + TRIANGLE_WIDTH;
-        const aId = `a_b${i+1}`;
-        const cId = `c_b${i+1}`;
-        const bId = `b_b${i+1}`;
+        const aId = `a${aIndex}`;
+        const cId = `c${aIndex}`;
+        const bId = `b${aIndex}`;
         addNode(aId, aX, BOTTOM_Y, aId);
         addNode(cId, cX, BOTTOM_Y, cId);
         addNode(bId, (aX + cX) / 2, BOTTOM_Y + TRIANGLE_HEIGHT, bId);
         bottomA.push(aId); bottomB.push(bId); bottomC.push(cId);
     }
 
-    // connect turn end to first bottom a (the rightmost bottom a)
+    // connect turn end to first bottom a (a7)
     addLink(turnNodes[turnNodes.length - 1], bottomA[0]);
 
     // bottom gadget edges and spine links (right-to-left)
-    for (let i = 0; i < GADGETS; i++) {
+    for (let i = 0; i < BOTTOM_GADGETS; i++) {
         addLink(bottomA[i], bottomC[i]);
         addLink(bottomA[i], bottomB[i]);
         addLink(bottomB[i], bottomC[i]);
-        if (i < GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
+        if (i < BOTTOM_GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
     }
 
     // Antennae from bottom b nodes (down-right)
-    for (let i = 0; i < GADGETS; i++) {
+    for (let i = 0; i < BOTTOM_GADGETS; i++) {
         let prev = bottomB[i];
         let baseX = (G.nodes.find(n => n.id === prev).x);
         let baseY = (G.nodes.find(n => n.id === prev).y);
