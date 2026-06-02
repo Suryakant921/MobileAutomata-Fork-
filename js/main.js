@@ -166,7 +166,7 @@ function buildAndRender() {
 // Render triangular gadget graph for visual demo (no DMA simulation)
 function buildTriangleDemo() {
     stopPlay();
-    const G = generateTriangularGadgetGraph();
+    const G = generateTriangularGadgetGraph({ MIRROR: false });
 
     // Convert G (string ids) into numeric-indexed ported graph for DMA
     const ids = G.nodes.map(n => n.id);
