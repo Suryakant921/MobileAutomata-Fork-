@@ -99,28 +99,18 @@ export function generateTriangularGadgetGraph(opts = {}) {
         }
     }
 
-    // Create turn nodes to curve from top end to bottom start
+    // Create a direct connection from the last top gadget to the first bottom gadget,
+    // removing the intermediate turn nodes.
     const lastTopC = topC[topC.length - 1];
     const lastTopX = G.nodes.find(n => n.id === lastTopC).x;
-    const turnNodes = [];
-    for (let s = 0; s < TURN_SEGMENTS; s++) {
-        const tX = lastTopX + TURN_RIGHT_OFFSET + s * (TURN_RIGHT_OFFSET / TURN_SEGMENTS);
-        const tY = TOP_Y + Math.round((s+1) * (TURN_DROP / TURN_SEGMENTS));
-        const tId = `turn_${s+1}`;
-        addNode(tId, tX, tY, null, { hidden: true });
-        turnNodes.push(tId);
-    }
-    // link from last top c to first turn, then chain turns
-    addLink(lastTopC, turnNodes[0]);
-    for (let i = 0; i < turnNodes.length - 1; i++) addLink(turnNodes[i], turnNodes[i+1]);
 
     // Bottom row gadgets: place a7..a9 right-to-left
     const bottomA = [];
     const bottomB = [];
     const bottomC = [];
 
-    // bottomStartX slightly to the right of the last turn node
-    const bottomStartX = G.nodes.find(n => n.id === turnNodes[turnNodes.length - 1]).x + TURN_RIGHT_OFFSET;
+    // bottomStartX slightly to the right of the last top C node
+    const bottomStartX = lastTopX + TURN_RIGHT_OFFSET;
     for (let i = 0; i < BOTTOM_GADGETS; i++) {
         const aIndex = TOP_GADGETS + i + 1;
         const aX = bottomStartX - i * (TRIANGLE_WIDTH + SPINE_X_STEP) - TRIANGLE_WIDTH;
@@ -134,8 +124,8 @@ export function generateTriangularGadgetGraph(opts = {}) {
         bottomA.push(aId); bottomB.push(bId); bottomC.push(cId);
     }
 
-    // connect turn end to first bottom a (a7)
-    addLink(turnNodes[turnNodes.length - 1], bottomA[0]);
+    // connect the last top C directly to first bottom C (c7)
+    addLink(lastTopC, bottomC[0]);
 
     // bottom gadget edges and spine links (right-to-left)
     for (let i = 0; i < BOTTOM_GADGETS; i++) {

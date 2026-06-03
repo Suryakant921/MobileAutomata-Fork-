@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DMA Graph Exploration Simulator</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script>
+        // If the page was opened via the file:// protocol (common when using
+        // VS Code Run/Debug), redirect to a local HTTP server if available.
+        // Start a simple server in the workspace root with: `python -m http.server 8000`
+        if (location.protocol === 'file:') {
+            try {
+                // Redirect to localhost:8000 root (serves index.html)
+                window.location.replace('http://localhost:8000/');
+            } catch (e) {
+                // ignore
+            }
+        }
+    </script>
     <script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js" defer></script>
     <script type="module" src="js/main.js" defer></script>
 </head>
