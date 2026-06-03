@@ -134,8 +134,6 @@ export function generateTriangularGadgetGraph(opts = {}) {
         addLink(bottomB[i], bottomC[i]);
         if (i < BOTTOM_GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
     }
-    // connect c7 (node 56) to a8 (node 58)
-    addLink(bottomC[0], bottomA[1]);
 
     // Antennae from bottom b nodes (down-right)
     for (let i = 0; i < BOTTOM_GADGETS; i++) {
