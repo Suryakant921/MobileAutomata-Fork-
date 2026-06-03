@@ -124,18 +124,18 @@ export function generateTriangularGadgetGraph(opts = {}) {
         bottomA.push(aId); bottomB.push(bId); bottomC.push(cId);
     }
 
-    // connect the last top C directly to first bottom C (c7)
-    addLink(lastTopC, bottomC[0]);
+    // connect the last top C directly to first bottom A (a7)
+    addLink(lastTopC, bottomA[0]);
 
     // bottom gadget edges and spine links (right-to-left)
     for (let i = 0; i < BOTTOM_GADGETS; i++) {
         addLink(bottomA[i], bottomC[i]);
         addLink(bottomA[i], bottomB[i]);
         addLink(bottomB[i], bottomC[i]);
-        if (i < BOTTOM_GADGETS - 1 && i !== 0) addLink(bottomC[i], bottomA[i+1]);
+        if (i < BOTTOM_GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
     }
-    // connect a7 (node 55) directly to c8 (node 59)
-    addLink(bottomA[0], bottomC[1]);
+    // connect c7 (node 56) to a8 (node 58)
+    addLink(bottomC[0], bottomA[1]);
 
     // Antennae from bottom b nodes (down-right)
     for (let i = 0; i < BOTTOM_GADGETS; i++) {
