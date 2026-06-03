@@ -132,8 +132,10 @@ export function generateTriangularGadgetGraph(opts = {}) {
         addLink(bottomA[i], bottomC[i]);
         addLink(bottomA[i], bottomB[i]);
         addLink(bottomB[i], bottomC[i]);
-        if (i < BOTTOM_GADGETS - 1) addLink(bottomC[i], bottomA[i+1]);
+        if (i < BOTTOM_GADGETS - 1 && i !== 0) addLink(bottomC[i], bottomA[i+1]);
     }
+    // connect a7 (node 55) directly to c8 (node 59)
+    addLink(bottomA[0], bottomC[1]);
 
     // Antennae from bottom b nodes (down-right)
     for (let i = 0; i < BOTTOM_GADGETS; i++) {
