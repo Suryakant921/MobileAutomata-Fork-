@@ -277,5 +277,21 @@ function triangleGadget() {
         edges.push({ u: peakId, v: rightBase, portU: 1, portV: rightPort });
     }
 
+    // Swap the preset positions of the specified adjacent node pairs so their
+    // numbering is exchanged in the triangle gadget layout.
+    const swapPairs = [
+        [2, 3],
+        [5, 6],
+        [8, 9],
+        [11, 12],
+        [14, 15],
+        [17, 18],
+    ];
+    for (const [a, b] of swapPairs) {
+        const tmp = positions[a];
+        positions[a] = positions[b];
+        positions[b] = tmp;
+    }
+
     return fromPortedEdges(numNodes, edges, "preset", positions, 0);
 }
